@@ -1,0 +1,53 @@
+We are going to use this to perform forecasting and generate response with openai.
+
+
+import pandas as pd
+df = spark.sql("SELECT * FROM LakeHouse1110.salenewmonthly1Forecast LIMIT 1000")
+df = df.toPandas()
+
+dfs = df
+s = ""
+for i in range(45):#dfs.shape[0]):
+    s += f"date:{dfs.iloc[i,0]},sales:{dfs.iloc[i,3]},"
+
+
+from statsmodels.tsa.seasonal import seasonal_decompose
+import matplotlib.pyplot as plt
+
+df['date'] = pd.to_datetime(df['date'])
+df.set_index('date', inplace=True)
+
+# Resample the data to ensure monthly frequency, if necessary
+# Replace 'value' with the actual column name you want to analyze
+df_monthly = df['sales'].resample('M').mean()
+
+# Apply seasonal decomposition
+result = seasonal_decompose(df_monthly, model='additive', period=12)
+
+
+# Plot the decomposition
+result.plot()
+plt.show()
+
+
+
+MESSAGES = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Who won the world series in 2020?"},
+    {
+        "role": "assistant",
+        "content": "The Los Angeles Dodgers won the World Series in 2020.",
+    },
+    {"role": "user", "content": "Analyze and peroform forecasting for next 5 months for this data: " + s },
+]
+
+completion = client.chat.completions.create(
+    model=MODEL_NAME,
+    messages=MESSAGES,
+)
+
+first_choice = completion.choices[0]
+
+# Access the message content from the first choice
+response_message = first_choice.message.content
+print(response_message)
