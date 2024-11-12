@@ -1,0 +1,50 @@
+
+df = spark.sql("SELECT StoreID, sum(Revenue) as rev, Sum(cost) as cost, sum(DeliveryCost) as dcost FROM LakeHouse1110.StoreSalesDaily GROUP BY storeID LIMIT 1000") 
+df = df.toPandas()
+display(df)
+
+stringPer = f"[StoreID, Daily Revenue, Cost, DeliveryFee]"
+dic = {"storePerformance": [["StoreID", "Daily Revenue", "Cost", "DeliveryFee"]]}
+
+for i in range(df.shape[0]):
+    stringPer += f",[{df.iloc[i, 0]}, {df.iloc[i, 1]}, {df.iloc[i, 2]}, {df.iloc[i, 3]}]"
+
+# Show final dictionary
+
+
+MESSAGES = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Who won the world series in 2020?"},
+    {
+        "role": "assistant",
+        "content": "The Los Angeles Dodgers won the World Series in 2020.",
+    },
+    {"role": "user", "content": "analyze store sale performance for me: " + stringPer },
+]
+
+completion = client.chat.completions.create(
+    model=MODEL_NAME,
+    messages=MESSAGES,
+)
+
+print(completion.model_dump_json(indent=2))
+
+first_choice = completion.choices[0]
+
+# Access the message content from the first choice
+response_message = first_choice.message.content
+print(response_message)
+
+df = spark.sql("SELECT * FROM LakeHouse1110.product LIMIT 1000")
+display(df)
+
+df = spark.sql("INSERT INTO LakeHouse1110.dailysummary VALUES (CAST(current_date() AS STRING), response_message)")
+display(df)
+
+spark.sql("DELETE FROM LakeHouse1110.StoreSalesDaily")
+
+
+
+
+
+
