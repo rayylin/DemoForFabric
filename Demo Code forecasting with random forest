@@ -1,0 +1,79 @@
+# Welcome to your new notebook
+# Type here in the cell editor to add code!
+import numpy as np 
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+#sklearn
+from sklearn.model_selection import train_test_split, cross_val_score,KFold
+from sklearn import datasets, linear_model
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.linear_model import LassoCV
+from sklearn import preprocessing, svm
+
+df = spark.sql("SELECT * FROM LakeHouse1110.salenewmonthly1Forecast LIMIT 1000")
+
+display(df)
+
+df_train = df.toPandas()
+
+df_train['date'] = pd.to_datetime(df_train['date'])
+
+#train data
+df_train['year'] = df_train['date'].dt.year
+df_train['month'] = df_train['date'].dt.month
+df_train['day'] = df_train['date'].dt.day
+df_train['week'] = df_train['date'].dt.isocalendar().week # .dt.week attribute was deprecated and removed. Instead, you should use .dt.isocalendar().week.
+df_train['weekofyear'] = df_train['date'].dt.isocalendar().week # same as above
+df_train['dayofweek'] = df_train['date'].dt.dayofweek
+df_train['weekday'] = df_train['date'].dt.weekday
+df_train['dayofyear'] = df_train['date'].dt.dayofyear
+df_train['quarter'] = df_train['date'].dt.quarter
+
+df_train['is_month_start'] = df_train['date'].dt.is_month_start
+df_train['is_month_end'] =df_train['date'].dt.is_month_end
+df_train['is_quarter_start'] = df_train['date'].dt.is_quarter_start
+df_train['is_quarter_end'] = df_train['date'].dt.is_quarter_end
+df_train['is_year_start'] = df_train['date'].dt.is_year_start
+df_train['is_year_end'] = df_train['date'].dt.is_year_end
+
+del df_train['date']
+
+dft = df_train.iloc[:50]
+dfs = df_train.iloc[50:]
+dfs1= df_train.iloc[50:]
+
+y = dft['sales']
+X = dft.drop('sales', axis=1)
+dfs
+
+dfs = dfs.drop(columns=['sales'], errors='ignore')
+
+ss = StandardScaler()
+Xs =ss.fit_transform(X)
+X_test_ss = ss.transform(dfs)
+
+randomF = RandomForestRegressor()
+randomF.fit(Xs, y)
+print('Score :',randomF.score(Xs, y)) # R square
+
+pred_f = randomF.predict(X_test_ss)
+
+dfs1['Predictions'] = pred_f
+dfs1[["sales", "Predictions"]]
+
+
+
+
+
+
+
+
+
+
+
+
+
